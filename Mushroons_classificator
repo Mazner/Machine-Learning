@@ -1,0 +1,1492 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOPNZJdf164iCyyhb/2wCRy",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Mazner/Machine-Learning/blob/main/Mushroons_classificator\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "H4Kd2TtytgAO"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import imblearn as ibl\n",
+        "import seaborn as sns\n",
+        "import matplotlib.pyplot as plt\n",
+        "from sklearn.neighbors import KNeighborsClassifier\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "from sklearn.metrics import accuracy_score\n",
+        "from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold\n",
+        "from sklearn.svm import SVC"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = pd.read_csv(\"agaricus_lepiota_small_c.csv\")"
+      ],
+      "metadata": {
+        "id": "KLik2Ejz0ngL"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 540
+        },
+        "id": "GY169Df40t-V",
+        "outputId": "52063316-c35a-4546-bc59-4b2a43856baf"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "    class cap-shape cap-surface cap-color bruises odor gill-attachment  \\\n",
+              "0       e         x           s         y       t    a               f   \n",
+              "1       e         f           s         y       f    n               f   \n",
+              "2       e         k           s         w       f    c               f   \n",
+              "3       e         f           f         n       t    n               f   \n",
+              "4       p         x           s         w       t    p               f   \n",
+              "..    ...       ...         ...       ...     ...  ...             ...   \n",
+              "995     p         x           f         p       f    c               f   \n",
+              "996     p         x           y         n       f    n               f   \n",
+              "997     e         x           f         g       f    n               f   \n",
+              "998     e         b           s         w       t    a               f   \n",
+              "999     p         x           s         n       f    f               f   \n",
+              "\n",
+              "    gill-spacing gill-size gill-color  ... stalk-surface-below-ring  \\\n",
+              "0              w         b          g  ...                        s   \n",
+              "1              c         b          p  ...                        s   \n",
+              "2              w         b          g  ...                        s   \n",
+              "3              c         b          w  ...                        s   \n",
+              "4              c         n          w  ...                        s   \n",
+              "..           ...       ...        ...  ...                      ...   \n",
+              "995            w         n          n  ...                        s   \n",
+              "996            c         n          w  ...                        y   \n",
+              "997            c         b          u  ...                        s   \n",
+              "998            c         b          b  ...                        s   \n",
+              "999            c         n          n  ...                        s   \n",
+              "\n",
+              "    stalk-color-above-ring stalk-color-below-ring veil-type veil-color  \\\n",
+              "0                        w                      w         p          w   \n",
+              "1                        w                      w         p          w   \n",
+              "2                        w                      n         p          w   \n",
+              "3                        g                      w         p          w   \n",
+              "4                        w                      w         p          w   \n",
+              "..                     ...                    ...       ...        ...   \n",
+              "995                      w                      w         p          w   \n",
+              "996                      w                      y         p          w   \n",
+              "997                      g                      g         p          w   \n",
+              "998                      g                      w         p          w   \n",
+              "999                      w                      p         p          w   \n",
+              "\n",
+              "    ring-number ring-type spore-print-color population habitat  \n",
+              "0             o         p                 n          v       d  \n",
+              "1             o         f                 n          y       g  \n",
+              "2             t         e                 w          n       g  \n",
+              "3             o         p                 k          v       d  \n",
+              "4             o         p                 n          s       u  \n",
+              "..          ...       ...               ...        ...     ...  \n",
+              "995           o         p                 n          v       d  \n",
+              "996           o         e                 w          v       d  \n",
+              "997           o         e                 k          y       d  \n",
+              "998           o         p                 h          y       p  \n",
+              "999           o         e                 k          v       l  \n",
+              "\n",
+              "[1000 rows x 23 columns]"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-f8f05150-6716-4c5d-99d1-92c0c6a9b4c2\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>class</th>\n",
+              "      <th>cap-shape</th>\n",
+              "      <th>cap-surface</th>\n",
+              "      <th>cap-color</th>\n",
+              "      <th>bruises</th>\n",
+              "      <th>odor</th>\n",
+              "      <th>gill-attachment</th>\n",
+              "      <th>gill-spacing</th>\n",
+              "      <th>gill-size</th>\n",
+              "      <th>gill-color</th>\n",
+              "      <th>...</th>\n",
+              "      <th>stalk-surface-below-ring</th>\n",
+              "      <th>stalk-color-above-ring</th>\n",
+              "      <th>stalk-color-below-ring</th>\n",
+              "      <th>veil-type</th>\n",
+              "      <th>veil-color</th>\n",
+              "      <th>ring-number</th>\n",
+              "      <th>ring-type</th>\n",
+              "      <th>spore-print-color</th>\n",
+              "      <th>population</th>\n",
+              "      <th>habitat</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>e</td>\n",
+              "      <td>x</td>\n",
+              "      <td>s</td>\n",
+              "      <td>y</td>\n",
+              "      <td>t</td>\n",
+              "      <td>a</td>\n",
+              "      <td>f</td>\n",
+              "      <td>w</td>\n",
+              "      <td>b</td>\n",
+              "      <td>g</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>n</td>\n",
+              "      <td>v</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>e</td>\n",
+              "      <td>f</td>\n",
+              "      <td>s</td>\n",
+              "      <td>y</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>b</td>\n",
+              "      <td>p</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>y</td>\n",
+              "      <td>g</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>e</td>\n",
+              "      <td>k</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>f</td>\n",
+              "      <td>w</td>\n",
+              "      <td>b</td>\n",
+              "      <td>g</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>n</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>t</td>\n",
+              "      <td>e</td>\n",
+              "      <td>w</td>\n",
+              "      <td>n</td>\n",
+              "      <td>g</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>e</td>\n",
+              "      <td>f</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>t</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>b</td>\n",
+              "      <td>w</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>g</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>k</td>\n",
+              "      <td>v</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>p</td>\n",
+              "      <td>x</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>t</td>\n",
+              "      <td>p</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>n</td>\n",
+              "      <td>w</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>n</td>\n",
+              "      <td>s</td>\n",
+              "      <td>u</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>...</th>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "      <td>...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>995</th>\n",
+              "      <td>p</td>\n",
+              "      <td>x</td>\n",
+              "      <td>f</td>\n",
+              "      <td>p</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>f</td>\n",
+              "      <td>w</td>\n",
+              "      <td>n</td>\n",
+              "      <td>n</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>n</td>\n",
+              "      <td>v</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>996</th>\n",
+              "      <td>p</td>\n",
+              "      <td>x</td>\n",
+              "      <td>y</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>n</td>\n",
+              "      <td>w</td>\n",
+              "      <td>...</td>\n",
+              "      <td>y</td>\n",
+              "      <td>w</td>\n",
+              "      <td>y</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>e</td>\n",
+              "      <td>w</td>\n",
+              "      <td>v</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>997</th>\n",
+              "      <td>e</td>\n",
+              "      <td>x</td>\n",
+              "      <td>f</td>\n",
+              "      <td>g</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>b</td>\n",
+              "      <td>u</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>g</td>\n",
+              "      <td>g</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>e</td>\n",
+              "      <td>k</td>\n",
+              "      <td>y</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>998</th>\n",
+              "      <td>e</td>\n",
+              "      <td>b</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>t</td>\n",
+              "      <td>a</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>b</td>\n",
+              "      <td>b</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>g</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>h</td>\n",
+              "      <td>y</td>\n",
+              "      <td>p</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>999</th>\n",
+              "      <td>p</td>\n",
+              "      <td>x</td>\n",
+              "      <td>s</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>f</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>n</td>\n",
+              "      <td>n</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>e</td>\n",
+              "      <td>k</td>\n",
+              "      <td>v</td>\n",
+              "      <td>l</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "<p>1000 rows × 23 columns</p>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-f8f05150-6716-4c5d-99d1-92c0c6a9b4c2')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-f8f05150-6716-4c5d-99d1-92c0c6a9b4c2 button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-f8f05150-6716-4c5d-99d1-92c0c6a9b4c2');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 22
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Atribuindo os valores\n",
+        "Y será a classe (se é comestível ou venenoso)\n",
+        "X serão todos os outros atributos\n",
+        "y tera os valores 0 e 1 para representar edible ou poisoneus respectivamente"
+      ],
+      "metadata": {
+        "id": "8JVVBqfq1VQh"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df['class'] = df['class'].replace({'e': 0, 'p': 1})\n",
+        "y = df['class']\n",
+        "X = df.drop('class',axis = 1)\n",
+        "y\n"
+      ],
+      "metadata": {
+        "id": "Tm_9snsY0vxt",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "18e8d697-8e0c-463a-a804-d83017b82854"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0      0\n",
+              "1      0\n",
+              "2      0\n",
+              "3      0\n",
+              "4      1\n",
+              "      ..\n",
+              "995    1\n",
+              "996    1\n",
+              "997    0\n",
+              "998    0\n",
+              "999    1\n",
+              "Name: class, Length: 1000, dtype: int64"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 23
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Verificando a presença de valores nulos\n",
+        "Note que apenas o atributo Stal-root possui valores faltantes (310);"
+      ],
+      "metadata": {
+        "id": "0_dfZedb2j6O"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "X.isnull().sum()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "SEh75-eW1M-k",
+        "outputId": "38fc48ce-9bc5-4c40-fb4b-9cefd6fde19b"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "cap-shape                     0\n",
+              "cap-surface                   0\n",
+              "cap-color                     0\n",
+              "bruises                       0\n",
+              "odor                          0\n",
+              "gill-attachment               0\n",
+              "gill-spacing                  0\n",
+              "gill-size                     0\n",
+              "gill-color                    0\n",
+              "stalk-shape                   0\n",
+              "stalk-root                  310\n",
+              "stalk-surface-above-ring      0\n",
+              "stalk-surface-below-ring      0\n",
+              "stalk-color-above-ring        0\n",
+              "stalk-color-below-ring        0\n",
+              "veil-type                     0\n",
+              "veil-color                    0\n",
+              "ring-number                   0\n",
+              "ring-type                     0\n",
+              "spore-print-color             0\n",
+              "population                    0\n",
+              "habitat                       0\n",
+              "dtype: int64"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 24
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "lS865jg42_EW",
+        "outputId": "8d436209-f71b-4eda-a42f-e1f81f470c19"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(1000, 23)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 25
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Eliminando os valores faltantes\n",
+        "Utilizando da função dropna, podemos eliminar os atributos faltantes"
+      ],
+      "metadata": {
+        "id": "yCmKxpzB3CAt"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "df.drop(\"stalk-root\", inplace = True, axis=1)\n",
+        "df['class'] = df['class'].replace({'e': 0, 'p': 1})\n",
+        "y = df['class']\n",
+        "X = df.drop('class',axis = 1)\n",
+        "df.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "6oJDsu5A2mYK",
+        "outputId": "b8bdeaf2-bd2a-47cc-9ad3-bef37b3be411"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(1000, 22)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 26
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.preprocessing import OneHotEncoder"
+      ],
+      "metadata": {
+        "id": "Sa8K1MA022MT"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Escolha do OneHotEncoder\n",
+        "Decidi escolher o OneHotEncoder para este dataframe já que, após analisar o arquivo *.names*, notei que os atributos não possuem nenhum tipo de hierarquia entre si, ou seja, são apenas valores empíricos sem nenhuma hierarquia entre si.\n",
+        "O *OneHotEncoder* se torna útil quando não há hierarquias ou ordem, portanto baseado nisso, adoteremos ele para codificar o resto do Knn e SVM.\n"
+      ],
+      "metadata": {
+        "id": "8GaMUa3KC06G"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X.head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 352
+        },
+        "id": "DcOEGd1GocyV",
+        "outputId": "b59d8721-b935-4650-ddec-71165c541f4e"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "  cap-shape cap-surface cap-color bruises odor gill-attachment gill-spacing  \\\n",
+              "0         x           s         y       t    a               f            w   \n",
+              "1         f           s         y       f    n               f            c   \n",
+              "2         k           s         w       f    c               f            w   \n",
+              "3         f           f         n       t    n               f            c   \n",
+              "4         x           s         w       t    p               f            c   \n",
+              "\n",
+              "  gill-size gill-color stalk-shape  ... stalk-surface-below-ring  \\\n",
+              "0         b          g           t  ...                        s   \n",
+              "1         b          p           t  ...                        s   \n",
+              "2         b          g           t  ...                        s   \n",
+              "3         b          w           t  ...                        s   \n",
+              "4         n          w           e  ...                        s   \n",
+              "\n",
+              "  stalk-color-above-ring stalk-color-below-ring veil-type veil-color  \\\n",
+              "0                      w                      w         p          w   \n",
+              "1                      w                      w         p          w   \n",
+              "2                      w                      n         p          w   \n",
+              "3                      g                      w         p          w   \n",
+              "4                      w                      w         p          w   \n",
+              "\n",
+              "  ring-number ring-type spore-print-color population habitat  \n",
+              "0           o         p                 n          v       d  \n",
+              "1           o         f                 n          y       g  \n",
+              "2           t         e                 w          n       g  \n",
+              "3           o         p                 k          v       d  \n",
+              "4           o         p                 n          s       u  \n",
+              "\n",
+              "[5 rows x 21 columns]"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-81c40f78-5341-4bdd-bf0e-f13959750718\">\n",
+              "    <div class=\"colab-df-container\">\n",
+              "      <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>cap-shape</th>\n",
+              "      <th>cap-surface</th>\n",
+              "      <th>cap-color</th>\n",
+              "      <th>bruises</th>\n",
+              "      <th>odor</th>\n",
+              "      <th>gill-attachment</th>\n",
+              "      <th>gill-spacing</th>\n",
+              "      <th>gill-size</th>\n",
+              "      <th>gill-color</th>\n",
+              "      <th>stalk-shape</th>\n",
+              "      <th>...</th>\n",
+              "      <th>stalk-surface-below-ring</th>\n",
+              "      <th>stalk-color-above-ring</th>\n",
+              "      <th>stalk-color-below-ring</th>\n",
+              "      <th>veil-type</th>\n",
+              "      <th>veil-color</th>\n",
+              "      <th>ring-number</th>\n",
+              "      <th>ring-type</th>\n",
+              "      <th>spore-print-color</th>\n",
+              "      <th>population</th>\n",
+              "      <th>habitat</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>x</td>\n",
+              "      <td>s</td>\n",
+              "      <td>y</td>\n",
+              "      <td>t</td>\n",
+              "      <td>a</td>\n",
+              "      <td>f</td>\n",
+              "      <td>w</td>\n",
+              "      <td>b</td>\n",
+              "      <td>g</td>\n",
+              "      <td>t</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>n</td>\n",
+              "      <td>v</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>f</td>\n",
+              "      <td>s</td>\n",
+              "      <td>y</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>b</td>\n",
+              "      <td>p</td>\n",
+              "      <td>t</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>y</td>\n",
+              "      <td>g</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>k</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>f</td>\n",
+              "      <td>w</td>\n",
+              "      <td>b</td>\n",
+              "      <td>g</td>\n",
+              "      <td>t</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>n</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>t</td>\n",
+              "      <td>e</td>\n",
+              "      <td>w</td>\n",
+              "      <td>n</td>\n",
+              "      <td>g</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>f</td>\n",
+              "      <td>f</td>\n",
+              "      <td>n</td>\n",
+              "      <td>t</td>\n",
+              "      <td>n</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>b</td>\n",
+              "      <td>w</td>\n",
+              "      <td>t</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>g</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>k</td>\n",
+              "      <td>v</td>\n",
+              "      <td>d</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>x</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>t</td>\n",
+              "      <td>p</td>\n",
+              "      <td>f</td>\n",
+              "      <td>c</td>\n",
+              "      <td>n</td>\n",
+              "      <td>w</td>\n",
+              "      <td>e</td>\n",
+              "      <td>...</td>\n",
+              "      <td>s</td>\n",
+              "      <td>w</td>\n",
+              "      <td>w</td>\n",
+              "      <td>p</td>\n",
+              "      <td>w</td>\n",
+              "      <td>o</td>\n",
+              "      <td>p</td>\n",
+              "      <td>n</td>\n",
+              "      <td>s</td>\n",
+              "      <td>u</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "<p>5 rows × 21 columns</p>\n",
+              "</div>\n",
+              "      <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-81c40f78-5341-4bdd-bf0e-f13959750718')\"\n",
+              "              title=\"Convert this dataframe to an interactive table.\"\n",
+              "              style=\"display:none;\">\n",
+              "        \n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\"viewBox=\"0 0 24 24\"\n",
+              "       width=\"24px\">\n",
+              "    <path d=\"M0 0h24v24H0V0z\" fill=\"none\"/>\n",
+              "    <path d=\"M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z\"/><path d=\"M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z\"/>\n",
+              "  </svg>\n",
+              "      </button>\n",
+              "      \n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      flex-wrap:wrap;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "      <script>\n",
+              "        const buttonEl =\n",
+              "          document.querySelector('#df-81c40f78-5341-4bdd-bf0e-f13959750718 button.colab-df-convert');\n",
+              "        buttonEl.style.display =\n",
+              "          google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "        async function convertToInteractive(key) {\n",
+              "          const element = document.querySelector('#df-81c40f78-5341-4bdd-bf0e-f13959750718');\n",
+              "          const dataTable =\n",
+              "            await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                     [key], {});\n",
+              "          if (!dataTable) return;\n",
+              "\n",
+              "          const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "            '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "            + ' to learn more about interactive tables.';\n",
+              "          element.innerHTML = '';\n",
+              "          dataTable['output_type'] = 'display_data';\n",
+              "          await google.colab.output.renderOutput(dataTable, element);\n",
+              "          const docLink = document.createElement('div');\n",
+              "          docLink.innerHTML = docLinkHtml;\n",
+              "          element.appendChild(docLink);\n",
+              "        }\n",
+              "      </script>\n",
+              "    </div>\n",
+              "  </div>\n",
+              "  "
+            ]
+          },
+          "metadata": {},
+          "execution_count": 28
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.compose import ColumnTransformer\n",
+        "\n",
+        "X.reset_index(drop=True, inplace=True)\n",
+        "\n",
+        "transformers = []\n",
+        "for coluna in X.columns:\n",
+        "    transformers.append((coluna, OneHotEncoder(), [coluna]))\n",
+        "\n",
+        "ct_oh = ColumnTransformer(transformers, remainder='passthrough')\n",
+        "X_oh = ct_oh.fit_transform(X).todense()"
+      ],
+      "metadata": {
+        "id": "u80J51EWGunP",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "862db8f0-0a38-4351-8771-ee9fd14ebeaa"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "\rFolds avaliados:   0%|          | 0/10 [00:36<?, ?it/s]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Verificando se a codificação se fez correta\n",
+        "\n",
+        "Caso os valores estejam codificados corretamente, eles serão valores binários, podemos verificar a corretude observando a cabeça do X_oh."
+      ],
+      "metadata": {
+        "id": "Brf5wE8mpBka"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X.shape, X_oh.shape, y.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "NajLK4eFo__D",
+        "outputId": "f2ddf653-2dd2-4825-a726-6f5411b26c74"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "((1000, 21), (1000, 108), (1000,))"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 30
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Definindo a função de validação cruzada\n",
+        "\n",
+        "Como iremos utilizar a validação cruzada com 10 folds usando a classe 'cross validation' e 5 splits na busca em grade ('grid search'), e também iremos aplicar os classificadores SVM e KNN para isso, uma função genérica se torna mais útil para facilitar o trabalho. Essa função funciona da seguinte forma:\n",
+        "\n",
+        "Passamos o classificador desejado (como KNN, SVM, etc.) como parâmetro. Em seguida, fornecemos os dataframes de treinamento e validação, o número de splits para a validação cruzada e o número de splits para a busca em grade.\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "lBej6z0TrUQM"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from tqdm import tqdm\n",
+        "from sklearn.metrics import f1_score\n",
+        "\n",
+        "def do_cv(classificador, X, y, cv_splits=10, gs_cv_splits=5,\n",
+        "           scale=False, params={}):\n",
+        "\n",
+        "    skf = StratifiedKFold(n_splits=cv_splits,\n",
+        "                          shuffle=True,\n",
+        "                          random_state=1)\n",
+        "\n",
+        "    f1s = []\n",
+        "\n",
+        "    bp = tqdm(total=cv_splits, desc=\"Folds avaliados\")\n",
+        "\n",
+        "    for treino_idx, teste_idx in skf.split(X, y):\n",
+        "        X_treino = X[treino_idx]\n",
+        "        y_treino = y[treino_idx]\n",
+        "\n",
+        "        X_teste = X[teste_idx]\n",
+        "        y_teste = y[teste_idx]\n",
+        "\n",
+        "        if scale:\n",
+        "            ss = StandardScaler()\n",
+        "            X_treino = ss.fit_transform(X_treino)\n",
+        "            X_teste = ss.transform(X_teste)\n",
+        "\n",
+        "        clf = classificador()\n",
+        "\n",
+        "        scorefn = 'f1' if len(set(y_treino)) < 3 else 'f1_macro'\n",
+        "\n",
+        "        clf = GridSearchCV(clf, params, scoring=scorefn)\n",
+        "\n",
+        "        clf.fit(X_treino, y_treino)\n",
+        "\n",
+        "        pred = clf.predict(X_teste)\n",
+        "\n",
+        "        if len(set(y_treino)) > 2:\n",
+        "            f1 = f1_score(y_teste, pred, average='macro')\n",
+        "        else:\n",
+        "            f1 = f1_score(y_teste, pred)\n",
+        "\n",
+        "        bp.update(1)\n",
+        "\n",
+        "        f1s.append(f1)\n",
+        "\n",
+        "    bp.close()\n",
+        "\n",
+        "    return f1s"
+      ],
+      "metadata": {
+        "id": "kBup7hkfGhRc"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X_oh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "4HiFKFn-ttIU",
+        "outputId": "c9ada046-94f4-4a44-ac26-4f2baa7676e6"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "matrix([[0., 0., 0., ..., 0., 0., 0.],\n",
+              "        [0., 1., 0., ..., 0., 0., 0.],\n",
+              "        [0., 0., 1., ..., 0., 0., 0.],\n",
+              "        ...,\n",
+              "        [0., 0., 0., ..., 0., 0., 0.],\n",
+              "        [1., 0., 0., ..., 1., 0., 0.],\n",
+              "        [0., 0., 0., ..., 0., 0., 0.]])"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 40
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "X_oh_df = pd.DataFrame(X_oh, columns=ct_oh.get_feature_names_out())"
+      ],
+      "metadata": {
+        "id": "XleH1ZrnZRH6"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Utilizando o KNN"
+      ],
+      "metadata": {
+        "id": "lpJOqruMZ5xm"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "f1_knn = do_cv(KNeighborsClassifier, X_oh_df.values, y, cv_splits=10, gs_cv_splits=5, scale=False,\n",
+        "               params={'n_neighbors': range(1, 21, 2), 'metric': ['euclidean']})\n"
+      ],
+      "metadata": {
+        "id": "KSvkSPPZ5k6j",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "d8e6aa18-0f39-42dd-cf8e-efb23e30f398"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "\n",
+            "Folds avaliados:   0%|          | 0/10 [00:00<?, ?it/s]\u001b[A\n",
+            "Folds avaliados:  10%|█         | 1/10 [00:00<00:04,  1.93it/s]\u001b[A\n",
+            "Folds avaliados:  20%|██        | 2/10 [00:01<00:03,  2.02it/s]\u001b[A\n",
+            "Folds avaliados:  30%|███       | 3/10 [00:01<00:03,  1.99it/s]\u001b[A\n",
+            "Folds avaliados:  40%|████      | 4/10 [00:02<00:03,  1.99it/s]\u001b[A\n",
+            "Folds avaliados:  50%|█████     | 5/10 [00:02<00:02,  2.02it/s]\u001b[A\n",
+            "Folds avaliados:  60%|██████    | 6/10 [00:02<00:01,  2.05it/s]\u001b[A\n",
+            "Folds avaliados:  70%|███████   | 7/10 [00:03<00:01,  2.02it/s]\u001b[A\n",
+            "Folds avaliados:  80%|████████  | 8/10 [00:03<00:00,  2.03it/s]\u001b[A\n",
+            "Folds avaliados:  90%|█████████ | 9/10 [00:04<00:00,  2.02it/s]\u001b[A\n",
+            "Folds avaliados: 100%|██████████| 10/10 [00:04<00:00,  2.01it/s]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\"%.2f +- %.2f\" % (np.mean(f1_knn), np.std(f1_knn))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 35
+        },
+        "id": "pJSKoRsbYc4m",
+        "outputId": "c21b98e6-f843-4a45-ad8c-5e9c5793ffd4"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "'0.96 +- 0.01'"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "string"
+            }
+          },
+          "metadata": {},
+          "execution_count": 44
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Note que a taxa de acerto foi bem alta, com 96% e um desvio padrão de 1%"
+      ],
+      "metadata": {
+        "id": "6zPapNkSZ9pG"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Utilizando o svm"
+      ],
+      "metadata": {
+        "id": "DdPscrvSabWm"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "f1_svm = do_cv(SVC, X_oh_df.values, y, cv_splits=10, gs_cv_splits=5, scale=True,\n",
+        "               params={'C': [1, 10, 100, 1000], 'gamma': ['auto', 'scale']})"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "oZRSfSHoZw08",
+        "outputId": "7c350aa9-9183-4d31-b8fc-295a1c16eb39"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "\n",
+            "\n",
+            "\n",
+            "Folds avaliados:   0%|          | 0/10 [00:00<?, ?it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  10%|█         | 1/10 [00:01<00:09,  1.08s/it]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  20%|██        | 2/10 [00:02<00:07,  1.01it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  30%|███       | 3/10 [00:02<00:06,  1.05it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  40%|████      | 4/10 [00:03<00:05,  1.09it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  50%|█████     | 5/10 [00:04<00:04,  1.12it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  60%|██████    | 6/10 [00:05<00:03,  1.13it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  70%|███████   | 7/10 [00:06<00:02,  1.04it/s]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  80%|████████  | 8/10 [00:07<00:02,  1.07s/it]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados:  90%|█████████ | 9/10 [00:08<00:01,  1.01s/it]\u001b[A\u001b[A\u001b[A\n",
+            "\n",
+            "\n",
+            "Folds avaliados: 100%|██████████| 10/10 [00:09<00:00,  1.03it/s]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\"%.2f +- %.2f\" % (np.mean(f1_svm), np.std(f1_svm))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 35
+        },
+        "id": "92AYnXGWaLQY",
+        "outputId": "ce24d9cd-25d6-4db9-cfc0-d04b507469a0"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "'0.95 +- 0.03'"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "string"
+            }
+          },
+          "metadata": {},
+          "execution_count": 50
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Note que o SVM foi pior que o knn, porém com uma variância maior, então precisaremos utilizar do teste_t para vermos se existe diferença estatística entr eles.\n",
+        "#Utilizando o teste_t\n",
+        "\n",
+        "Para provarmos se há diferença entre os algoritmos, vamos inciar definindo a função de rejeição da hipótese nula, mostrada abaixo, também foi definida a função de cálculo de estatísticas para podermos utilizá-la dentro da hipótese nula"
+      ],
+      "metadata": {
+        "id": "hGURT0Syahkm"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def calcular_estatisticas(resultados):\n",
+        "    return np.mean(resultados), np.std(resultados), np.min(resultados), np.max(resultados)\n",
+        "\n",
+        "def imprimir_estatisticas(resultados):\n",
+        "    media, desvio, mini, maxi = calcular_estatisticas(resultados)\n",
+        "    print(\"Resultados: %.2f +- %.2f, min: %.2f, max: %.2f\" % (media, desvio, mini, maxi))\n",
+        "from scipy.stats import ttest_ind_from_stats\n",
+        "\n",
+        "def rejeitar_hip_nula(amostra1, amostra2, alpha=0.05):\n",
+        "    media_amostral1, desvio_padrao_amostral1, _, _ = calcular_estatisticas(amostra1)\n",
+        "\n",
+        "\n",
+        "    media_amostral2, desvio_padrao_amostral2, _, _ = calcular_estatisticas(amostra2)\n",
+        "\n",
+        "\n",
+        "    _, pvalor = ttest_ind_from_stats(media_amostral1, desvio_padrao_amostral1,\n",
+        "                                     len(amostra1), media_amostral2,\n",
+        "                                     desvio_padrao_amostral2,\n",
+        "                                     len(amostra2))\n",
+        "    return (pvalor <= alpha, pvalor)"
+      ],
+      "metadata": {
+        "id": "IPb8tgA5aXJf"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "rejeitar_hip_nula(f1_knn, f1_svm)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "sALfF5qva6Y0",
+        "outputId": "942c53ac-8b79-45c1-c4ec-37c0ee48d618"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(False, 0.17401771178605946)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 54
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Note que o valor foi falso, isso nos diz que não há diferença significativa entre o KNN e o SVM, logo ambos são estatisticamente iguais."
+      ],
+      "metadata": {
+        "id": "TX4p710ZbIU7"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Você comeria os cogumelos?\n",
+        "Eu comeria os cogumelos com certeza, uma taxa de 95% de certeza é bem alta, alta o suficiente para eu confiar numa questão de necessidade, taxa essa mais alta que muitos métodos contraceptivos, ou chances de pegar doenças. Então em conclusão, eu comeria os cogumelos."
+      ],
+      "metadata": {
+        "id": "BbKNF-g6bSS4"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "r0quHni2dzBk"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
